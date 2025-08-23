@@ -145,6 +145,6 @@ Notes:
 
 ### Helpful Cloudflare docs
 
-- Install and setup `cloudflared`: `https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/`
+- [Install and setup](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/) `cloudflared`
 - Run as a service: [Cloudflare’s official guidance on running as a service](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/run-tunnel/run-as-service/)
 - macOS service caveat: [cloudflared issue #327](https://github.com/cloudflare/cloudflared/issues/327)
