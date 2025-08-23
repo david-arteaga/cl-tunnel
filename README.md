@@ -104,7 +104,9 @@ cl-tunnel list
 cl-tunnel remove <subdomain>
 ```
 
-### What `cl-tunnel add` does (under the hood)
+---
+
+## What `cl-tunnel add` does (under the hood)
 
 When you run `cl-tunnel add <subdomain> <port>`, the CLI performs the following steps:
 
