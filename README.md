@@ -18,8 +18,6 @@ You can then access: `https://api.example.com` (after DNS propagation) which wil
 
 ## Installation
 
-3 steps:
-
 ### 1. Prerequisites
 
 1. Install `cloudflared` (or [see Cloudflare docs](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/))
@@ -48,7 +46,17 @@ cloudflared tunnel create local-dev-mac-tunnel
 
 - This will create the required credentials file and write your Cloudflare Tunnel config under `~/.cloudflared/`.
 
-### 2. macOS service install (one-time)
+### 2. Install the CLI
+
+#### Install via npm/yarn/pnpm/yarn (global)
+
+```bash
+npm install -g cloudflare-quick-tunnel
+```
+
+This package ships a single-file Bun-compiled executable at `dist/cl-tunnel` and exposes it via the npm `bin` field.
+
+### 3. macOS service install (one-time)
 
 Run the CLI to install and patch the `cloudflared` launch agent so it runs the tunnel reliably on macOS login:
 
@@ -65,7 +73,7 @@ Why the patch? There’s a long-standing macOS issue where the service may start
 
 If you prefer Cloudflare’s official guidance on running as a service, refer to [Cloudflare’s official guidance on running as a service](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/run-tunnel/run-as-service/).
 
-### 3. Initialize the CLI config
+### 4. Initialize the CLI config
 
 Tell `cl-tunnel` which root domain you’ll be using for subdomains:
 
