@@ -1,7 +1,23 @@
 {
   "name": "cl-tunnel",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Opinionated CLI wrapper around cloudflared to manage ingress for a single tunnel",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/david-arteaga/cl-tunnel.git"
+  },
+  "author": "David Arteaga",
+  "license": "MIT",
+  "keywords": [
+    "cloudflare",
+    "tunnel",
+    "cli",
+    "wrapper"
+  ],
+  "homepage": "https://github.com/david-arteaga/cl-tunnel#readme",
+  "bugs": {
+    "url": "https://github.com/david-arteaga/cl-tunnel/issues"
+  },
   "module": "index.ts",
   "type": "module",
   "private": false,
