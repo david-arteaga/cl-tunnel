@@ -1,8 +1,8 @@
 import { Command } from 'commander';
 import z from 'zod';
-import { trimmed } from './trim-empty-lines';
 import { uniquesBy } from './uniques';
 import yaml from './yaml';
+import { createOSServiceManager } from './os-service-manager';
 
 const program = new Command();
 
@@ -15,40 +15,27 @@ program
   .description(
     'Quick CLI tool for managing Cloudflare tunnels with ingress configuration'
   )
-  .version('0.1.2');
+  .version('0.2.0');
 
 const cloudflaredConfigFile = `${home}/.cloudflared/config.yml`;
-const cloudflaredServiceFile = `${home}/Library/LaunchAgents/com.cloudflare.cloudflared.plist`;
 
-const servicePatch = (cloudflaredBinPath: string) => ({
-  search: trimmed`
-		<array>
-			<string>${cloudflaredBinPath}</string>
-		</array>
-`,
-  replace: trimmed`
-		<array>
-			<string>${cloudflaredBinPath}</string>
-			<string>tunnel</string>
-			<string>run</string>
-		</array>
-`,
-});
+const serviceManager = createOSServiceManager();
 
 program
   .command('install-service')
-  .description('Install cloudflared as a macOS launch agent service')
+  .description('Install cloudflared service')
   .action(async () => {
     console.log('Installing cloudflared service...');
 
     try {
-      // Install the service
+      // Install the service using cloudflared CLI
       await Bun.$`cloudflared service install`;
       console.log('Service installed successfully');
 
       // Check if service file exists
-      if (!(await Bun.file(cloudflaredServiceFile).exists())) {
-        console.error(`Service file not found at: ${cloudflaredServiceFile}`);
+      const serviceFilePath = serviceManager.getServiceFilePath();
+      if (!(await Bun.file(serviceFilePath).exists())) {
+        console.error(`Service file not found at: ${serviceFilePath}`);
         return;
       }
 
@@ -57,39 +44,21 @@ program
       const cloudflaredBinPath = result.trim();
       console.log(`Found cloudflared binary at: ${cloudflaredBinPath}`);
 
-      console.log(
-        'Will try to patch service file at: ',
-        cloudflaredServiceFile
-      );
-
-      // Read service file
-      const serviceFileContent = await Bun.file(cloudflaredServiceFile).text();
-
-      const patch = servicePatch(cloudflaredBinPath);
+      console.log('Will try to patch service file at: ', serviceFilePath);
 
       // Check if already patched
-      if (serviceFileContent.includes(patch.replace)) {
+      if (await serviceManager.isServiceFilePatched(cloudflaredBinPath)) {
         console.log('Service file already patched');
       } else {
         // Apply patch
-        const patchedContent = serviceFileContent.replace(
-          patch.search,
-          patch.replace
-        );
-
-        if (patchedContent === serviceFileContent) {
-          console.error('Failed to apply patch - search pattern not found');
-          return;
-        }
-
-        // Write patched file
-        await Bun.write(cloudflaredServiceFile, patchedContent);
+        await serviceManager.patchServiceFile(cloudflaredBinPath);
         console.log('Service file patched successfully');
+
+        // Restart the service
+        console.log('Reloading cloudflared service definition...');
+        await serviceManager.reloadServiceDefinition();
       }
 
-      // Restart the service
-      console.log('Restarting cloudflared service...');
-      await Bun.$`launchctl kickstart -k gui/$(id -u)/com.cloudflare.cloudflared`;
       console.log('Service restarted successfully');
     } catch (error) {
       console.error('Failed to install service:', error);
@@ -105,13 +74,9 @@ program
     try {
       // Stop the service first
       console.log('Stopping cloudflared service...');
-      await Bun.$`launchctl stop com.cloudflare.cloudflared`.nothrow();
+      // await serviceManager.stopService();
 
-      // Unload the service
-      console.log('Unloading cloudflared service...');
-      await Bun.$`launchctl unload ${cloudflaredServiceFile}`.nothrow();
-
-      // Remove the service installation
+      // Remove the service installation using cloudflared CLI
       await Bun.$`cloudflared service uninstall`;
       console.log('Service removed successfully');
     } catch (error) {
@@ -130,7 +95,7 @@ program
   .command('init')
   .description('Initialize CLI configuration')
   .argument('<domain>', 'The domain to use for tunnels (e.g., google.com)')
-  .action(async (domain, options) => {
+  .action(async (domain) => {
     console.log(`Initializing CLI configuration with domain: ${domain}`);
 
     const config = {
@@ -170,10 +135,7 @@ async function getCliConfig() {
   return validated;
 }
 
-const logs = {
-  out: `${home}/Library/Logs/com.cloudflare.cloudflared.out.log`,
-  err: `${home}/Library/Logs/com.cloudflare.cloudflared.err.log`,
-};
+const logs = serviceManager.getLogPaths();
 
 const configSchema = z.object({
   tunnel: z.uuid(),
@@ -329,7 +291,7 @@ program
 
       try {
         console.log('Restarting cloudflared...');
-        await Bun.$`launchctl kickstart -k gui/$(id -u)/com.cloudflare.cloudflared`;
+        await serviceManager.restartService();
         console.log('Cloudflared restarted successfully');
       } catch (error) {
         console.error('Error restarting cloudflared:', error);
@@ -338,7 +300,7 @@ program
         await Bun.write(cloudflaredConfigFile, originalConfig);
 
         console.log('Restarting cloudflared after rollback...');
-        await Bun.$`launchctl kickstart -k gui/$(id -u)/com.cloudflare.cloudflared`;
+        await serviceManager.restartService();
         console.log('Cloudflared restarted successfully');
         return;
       }
@@ -419,7 +381,7 @@ program
 
     // Restart cloudflared
     console.log('Restarting cloudflared...');
-    await Bun.$`launchctl kickstart -k gui/$(id -u)/com.cloudflare.cloudflared`;
+    await serviceManager.restartService();
     console.log('Cloudflared restarted successfully');
   });
 
@@ -466,7 +428,7 @@ program
     console.log('Restarting cloudflared tunnel...');
 
     try {
-      await Bun.$`launchctl kickstart -k gui/$(id -u)/com.cloudflare.cloudflared`;
+      await serviceManager.restartService();
       console.log('Cloudflared tunnel restarted successfully');
     } catch (error) {
       console.error('Failed to restart cloudflared tunnel:', error);
@@ -480,7 +442,7 @@ program
     console.log('Stopping cloudflared tunnel...');
 
     try {
-      await Bun.$`launchctl stop com.cloudflare.cloudflared`;
+      await serviceManager.stopService();
       console.log('Cloudflared tunnel stopped successfully');
     } catch (error) {
       console.error('Failed to stop cloudflared tunnel:', error);
@@ -493,11 +455,8 @@ async function validateCloudflaredSetup() {
     console.error(
       'cloudflared is not installed. Please install it before using this tool'
     );
-    const isMacOs = process.platform === 'darwin';
-    if (isMacOs) {
-      console.log('You can install it with brew:');
-      console.log('brew install cloudflared');
-    }
+    const instructions = serviceManager.getInstallInstructions();
+    instructions.forEach((instruction) => console.log(instruction));
     console.log(
       'Or visit the Cloudflare docs for installation instructions: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/'
     );
