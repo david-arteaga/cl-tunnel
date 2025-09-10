@@ -1,8 +1,11 @@
 import { Command } from 'commander';
+// import { marked } from 'marked';
+// import TerminalRenderer from 'marked-terminal';
 import z from 'zod';
+import { createOSServiceManager } from './os-service-manager';
+import readme from './README.md';
 import { uniquesBy } from './uniques';
 import yaml from './yaml';
-import { createOSServiceManager } from './os-service-manager';
 
 const program = new Command();
 
@@ -512,5 +515,19 @@ program.hook('preAction', async (_, actionCommand) => {
     domain = cliConfig.domain;
   }
 });
+
+program
+  .command('readme')
+  .description('Print the README documentation')
+  .action(async () => {
+    const { marked } = await import('marked');
+    const { markedTerminal } = await import('marked-terminal');
+    marked.use(markedTerminal({}) as any);
+
+    const readmeContent = await Bun.file(readme).text();
+
+    const renderedMarkdown = marked(readmeContent);
+    console.log(renderedMarkdown);
+  });
 
 program.parse();

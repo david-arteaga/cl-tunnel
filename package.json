@@ -41,7 +41,8 @@
   ],
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/js-yaml": "^4.0.9"
+    "@types/js-yaml": "^4.0.9",
+    "@types/marked-terminal": "^6.1.1"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -49,6 +50,8 @@
   "dependencies": {
     "commander": "^14.0.0",
     "js-yaml": "^4.1.0",
+    "marked": "^16.2.1",
+    "marked-terminal": "^7.3.0",
     "yaml": "^2.8.1",
     "zod": "^4.1.0"
   }
