@@ -1,6 +1,6 @@
 {
   "name": "cl-tunnel",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Opinionated CLI wrapper around cloudflared to manage ingress for a single tunnel",
   "repository": {
     "type": "git",
