@@ -51,7 +51,7 @@ cloudflared tunnel create local-dev-mac-tunnel
 #### Install via npm/yarn/pnpm/yarn (global)
 
 ```bash
-npm install -g cloudflare-quick-tunnel
+npm install -g cl-tunnel
 ```
 
 This package ships a single-file Bun-compiled executable at `dist/cl-tunnel` and exposes it via the npm `bin` field.

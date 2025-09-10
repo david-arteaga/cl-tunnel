@@ -18,7 +18,7 @@ program
   .description(
     'Quick CLI tool for managing Cloudflare tunnels with ingress configuration'
   )
-  .version('0.3.0');
+  .version('0.3.1');
 
 const cloudflaredConfigFile = `${home}/.cloudflared/config.yml`;
 
