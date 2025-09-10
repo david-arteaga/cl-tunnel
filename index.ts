@@ -1,6 +1,4 @@
 import { Command } from 'commander';
-// import { marked } from 'marked';
-// import TerminalRenderer from 'marked-terminal';
 import z from 'zod';
 import { createOSServiceManager } from './os-service-manager';
 import readme from './README.md';
