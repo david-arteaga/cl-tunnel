@@ -242,6 +242,9 @@ program
         service: `http://localhost:${port}`,
       };
 
+      config.ingress = config.ingress.filter(
+        (rule) => rule.hostname !== newIngress.hostname
+      );
       config.ingress.push(newIngress);
 
       config.ingress.sort((a, b) => {
@@ -279,7 +282,7 @@ program
       console.log(`Ingress rule for ${subdomain} added successfully`);
 
       try {
-        await Bun.$`cloudflared tunnel route dns ${config.tunnel} ${subdomain}`;
+        await Bun.$`cloudflared tunnel route dns -f ${config.tunnel} ${subdomain}`;
       } catch (error) {
         console.error('Error adding ingress rule:', error);
 
